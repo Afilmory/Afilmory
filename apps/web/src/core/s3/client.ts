@@ -14,6 +14,10 @@ function createS3Client(): S3Client {
       accessKeyId: env.S3_ACCESS_KEY_ID,
       secretAccessKey: env.S3_SECRET_ACCESS_KEY,
     },
+    // from https://github.com/aws/aws-sdk-js-v3/issues/6810
+    // some non AWS services like backblaze or cloudflare don't expect the new headers
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   }
 
   // 如果提供了自定义端点，则使用它
