@@ -135,8 +135,19 @@ export class S3StorageProvider implements StorageProvider {
       return `https://${this.config.bucket}.s3.${this.config.region}.amazonaws.com/${key}`
     }
 
-    // 对于自定义端点（如 MinIO 等）
     const baseUrl = endpoint.replace(/\/$/, '') // 移除末尾的斜杠
+
+    if (endpoint.includes('aliyuncs.com')) {
+      const protocolEndIndex = baseUrl.indexOf('//')
+      if (protocolEndIndex === -1) {
+        throw new Error('Invalid base URL format')
+      }
+      // 将 bucket 插入到 'https://` 之后，region 之前
+      const prefix = baseUrl.slice(0, protocolEndIndex + 2) // 包括 'https://'
+      const suffix = baseUrl.slice(protocolEndIndex + 2) // 剩余部分
+      return `${prefix}${this.config.bucket}.${suffix}/${key}`
+    }
+    // 对于自定义端点（如 MinIO 等）
     return `${baseUrl}/${this.config.bucket}/${key}`
   }
 
