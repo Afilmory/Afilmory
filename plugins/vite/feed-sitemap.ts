@@ -39,8 +39,8 @@ export function createFeedSitemapPlugin(siteConfig: SiteConfig): Plugin {
           __dirname,
           '../../packages/data/src/photos-manifest.json',
         )
-        const photosData: PhotoData[] = JSON.parse(
-          readFileSync(manifestPath, 'utf-8'),
+        const photosData: PhotoData[] = (JSON.parse(
+          readFileSync(manifestPath, 'utf-8'),).data
         )
 
         // Sort photos by date taken (newest first)

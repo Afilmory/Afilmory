@@ -30,7 +30,7 @@ class BuildTimePhotoLoader {
     try {
       const manifestPath = join(workdir, 'src/data/photos-manifest.json')
       const manifestContent = readFileSync(manifestPath, 'utf-8')
-      this.photos = JSON.parse(manifestContent) as PhotoManifest[]
+      this.photos = JSON.parse(manifestContent).data as PhotoManifest[]
 
       this.photos.forEach((photo) => {
         this.photoMap[photo.id] = photo
