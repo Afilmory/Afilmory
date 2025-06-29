@@ -7,6 +7,7 @@ import { RootProviders } from './providers/root-providers'
 function App() {
   useEffect(() => {
     import('~/pages/(main)/[photoId]/index')
+    import('~/pages/(main)/explory/index')
   }, [])
   return (
     <RootProviders>
