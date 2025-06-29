@@ -11,9 +11,12 @@ export async function generateBlurhash(
 ): Promise<string | null> {
   try {
     // 复用缩略图的 Sharp 实例来生成 blurhash
-    const { data, info } = await sharp(thumbnailBuffer).toBuffer({
-      resolveWithObject: true,
-    })
+    const { data, info } = await sharp(thumbnailBuffer)
+      .ensureAlpha() // 确保有 alpha 通道
+      .raw() // 获取原始像素数据
+      .toBuffer({
+        resolveWithObject: true,
+      })
 
     const xComponents = Math.min(Math.max(Math.round(info.width / 16), 3), 9)
     const yComponents = Math.min(Math.max(Math.round(info.height / 16), 3), 9)
