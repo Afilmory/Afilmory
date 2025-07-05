@@ -10,7 +10,10 @@ export const handler = async (req: NextRequest) => {
     return new NextResponse(null, { status: 404 })
   }
 
-  if (req.nextUrl.pathname.startsWith('/thumbnails')) {
+  if (
+    req.nextUrl.pathname.startsWith('/thumbnails') ||
+    req.nextUrl.pathname.startsWith('/photos')
+  ) {
     return proxyAssets(req)
   }
 

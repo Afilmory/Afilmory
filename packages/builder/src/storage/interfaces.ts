@@ -67,4 +67,13 @@ export type GitHubConfig = {
   path?: string
   useRawUrl?: boolean
 }
-export type StorageConfig = S3Config | GitHubConfig
+
+export type LocalConfig = {
+  provider: 'local'
+  basePath: string
+  baseUrl?: string
+  excludeRegex?: string
+  maxFileLimit?: number
+}
+
+export type StorageConfig = S3Config | GitHubConfig | LocalConfig

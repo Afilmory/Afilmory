@@ -23,6 +23,7 @@ import { createFeedSitemapPlugin } from './plugins/vite/feed-sitemap'
 import { localesJsonPlugin } from './plugins/vite/locales-json'
 import { manifestInjectPlugin } from './plugins/vite/manifest-inject'
 import { ogImagePlugin } from './plugins/vite/og-image-plugin'
+import { photosStaticPlugin } from './plugins/vite/photos-static'
 
 const devPrint = (): PluginOption => ({
   name: 'dev-print',
@@ -78,6 +79,7 @@ export default defineConfig({
     ]),
     localesJsonPlugin(),
     manifestInjectPlugin(),
+    photosStaticPlugin(),
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',

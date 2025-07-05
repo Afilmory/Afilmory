@@ -1,5 +1,6 @@
 import type { StorageConfig, StorageProvider } from './interfaces'
 import { GitHubStorageProvider } from './providers/github-provider.js'
+import { LocalStorageProvider } from './providers/local-provider.js'
 import { S3StorageProvider } from './providers/s3-provider.js'
 
 export class StorageFactory {
@@ -15,6 +16,9 @@ export class StorageFactory {
       }
       case 'github': {
         return new GitHubStorageProvider(config)
+      }
+      case 'local': {
+        return new LocalStorageProvider(config)
       }
     }
   }

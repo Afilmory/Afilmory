@@ -144,6 +144,122 @@ GitHub 存储提供商会处理以下错误：
 - **422 Unprocessable Entity**: 请求格式错误
 - **500+ Server Error**: GitHub 服务器错误
 
+## 本地存储提供商
+
+将照片存储在本地文件系统中，适合开发环境或私有部署。
+
+### 特点
+
+- ✅ 无需外部依赖
+- ✅ 快速访问速度
+- ✅ 完全私有控制
+- ✅ 支持递归目录扫描
+- ✅ 支持 Live Photos 检测
+- ⚠️ 需要确保文件系统权限
+- ⚠️ 不适合分布式部署
+
+### 配置示例
+
+```typescript
+const localConfig: StorageConfig = {
+  provider: 'local',
+  basePath: './photos',              // 本地照片存储路径（相对或绝对路径）
+  baseUrl: 'http://localhost:3000/photos', // 可选：用于生成公共 URL
+  excludeRegex: '\\.(tmp|cache)$',   // 可选：排除文件的正则表达式
+  maxFileLimit: 1000,                // 可选：最大文件数量限制
+}
+```
+
+### 路径配置
+
+- **相对路径**: 相对于项目根目录，如 `./photos`、`../images`
+- **绝对路径**: 完整的文件系统路径，如 `/home/user/photos`、`C:\\Photos`
+
+### 使用示例
+
+```typescript
+import { LocalStorageProvider } from '@/core/storage'
+
+const localProvider = new LocalStorageProvider({
+  provider: 'local',
+  basePath: './photos',
+  baseUrl: 'http://localhost:3000/photos',
+})
+
+// 获取文件
+const buffer = await localProvider.getFile('sunset.jpg')
+
+// 列出所有图片
+const images = await localProvider.listImages()
+
+// 生成公共 URL
+const url = localProvider.generatePublicUrl('sunset.jpg')
+// 结果：http://localhost:3000/photos/sunset.jpg
+
+// 检查存储路径
+const exists = await localProvider.checkBasePath()
+if (!exists) {
+  await localProvider.ensureBasePath()
+}
+```
+
+### 目录结构示例
+
+```
+photos/
+├── 2024/
+│   ├── 01-january/
+│   │   ├── IMG_001.jpg
+│   │   ├── IMG_001.mov  # Live Photo 视频
+│   │   └── IMG_002.heic
+│   └── 02-february/
+│       └── sunset.jpg
+├── 2023/
+│   └── vacation/
+│       ├── beach.jpg
+│       └── mountain.png
+└── misc/
+    └── screenshot.png
+```
+
+### 最佳实践
+
+1. **权限管理**: 确保应用有读取照片目录的权限
+2. **路径安全**: 避免使用包含特殊字符的路径
+3. **性能优化**: 对于大量文件，考虑使用 `maxFileLimit` 限制
+4. **备份策略**: 定期备份重要照片文件
+5. **监控空间**: 监控磁盘空间使用情况
+
+### 开发环境配置
+
+对于开发环境，推荐使用相对路径：
+
+```json
+{
+  "storage": {
+    "provider": "local",
+    "basePath": "./dev-photos",
+    "baseUrl": "http://localhost:1924/photos"
+  }
+}
+```
+
+### 生产环境配置
+
+对于生产环境，推荐使用绝对路径：
+
+```json
+{
+  "storage": {
+    "provider": "local",
+    "basePath": "/var/www/photos",
+    "baseUrl": "https://yourdomain.com/photos",
+    "excludeRegex": "\\.(tmp|cache|DS_Store)$",
+    "maxFileLimit": 5000
+  }
+}
+```
+
 ### 与其他提供商的对比
 
 | 特性 | S3 | GitHub |
