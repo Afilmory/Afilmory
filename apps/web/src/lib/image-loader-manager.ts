@@ -380,13 +380,12 @@ export class ImageLoaderManager {
 
     if (result.success && result.videoUrl) {
       const convertedVideoUrl = result.videoUrl
-      const conversionMethod = result.method || 'unknown'
 
       videoElement.src = result.videoUrl
       videoElement.load()
 
       console.info(
-        `Video conversion completed using ${result.method}. Size: ${result.convertedSize ? Math.round(result.convertedSize / 1024) : 'unknown'}KB`,
+        `Video conversion completed. Size: ${result.convertedSize ? Math.round(result.convertedSize / 1024) : 'unknown'}KB`,
       )
 
       onLoadingStateUpdate?.({
@@ -398,7 +397,6 @@ export class ImageLoaderManager {
           videoElement.removeEventListener('canplaythrough', handleVideoCanPlay)
           resolve({
             convertedVideoUrl,
-            conversionMethod,
           })
         }
 

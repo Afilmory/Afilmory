@@ -47,7 +47,7 @@ export const LivePhoto = ({
   const [isPlayingLivePhoto, setIsPlayingLivePhoto] = useState(false)
   const [livePhotoVideoLoaded, setLivePhotoVideoLoaded] = useState(false)
   const [isConvertingVideo, setIsConvertingVideo] = useState(false)
-  const [conversionMethod, setConversionMethod] = useState<string>('')
+
   const videoRef = useRef<HTMLVideoElement>(null)
   const videoAnimateController = useAnimationControls()
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -68,7 +68,7 @@ export const LivePhoto = ({
     setIsConvertingVideo(true)
     const processVideo = async () => {
       try {
-        const videoResult = await imageLoaderManager.processLivePhotoVideo(
+        await imageLoaderManager.processLivePhotoVideo(
           videoUrl,
           videoRef.current!,
           {
@@ -77,9 +77,7 @@ export const LivePhoto = ({
             },
           },
         )
-        if (videoResult.conversionMethod) {
-          setConversionMethod(videoResult.conversionMethod)
-        }
+
         setLivePhotoVideoLoaded(true)
       } catch (videoError) {
         console.error('Failed to process Live Photo video:', videoError)
@@ -102,7 +100,7 @@ export const LivePhoto = ({
       setIsPlayingLivePhoto(false)
       setLivePhotoVideoLoaded(false)
       setIsConvertingVideo(false)
-      setConversionMethod('')
+
       videoAnimateController.set({ opacity: 0 })
     }
   }, [isCurrentImage, videoAnimateController])
@@ -199,9 +197,6 @@ export const LivePhoto = ({
           <>
             <i className="i-mingcute-live-photo-line size-4" />
             <span className="mr-1">{t('photo.live.badge')}</span>
-            {conversionMethod && (
-              <span className="rounded bg-white/20 px-1 text-xs">transmux</span>
-            )}
           </>
         )}
       </div>
@@ -227,7 +222,7 @@ export const LivePhoto = ({
         )}
       >
         {isConvertingVideo
-          ? t('photo.live.converting.detail', { method: 'transmux' })
+          ? t('photo.live.converting.detail')
           : isMobileDevice
             ? t('photo.live.tooltip.mobile.zoom')
             : t('photo.live.tooltip.desktop.zoom')}

@@ -15,7 +15,6 @@ interface ConversionResult {
   videoUrl?: string
   error?: string
   convertedSize?: number
-  method?: 'transmux'
 }
 
 // Global video cache instance using the generic LRU cache with custom cleanup

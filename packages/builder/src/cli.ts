@@ -131,13 +131,21 @@ async function main() {
     // 拉取远程仓库
     logger.main.info('🔄 同步远程仓库...')
 
+    // 解析仓库 URL，添加 token
+    let repoUrl = builderConfig.repo.url
+    const { token } = builderConfig.repo
+    if (token && repoUrl.startsWith('https://github.com/')) {
+      const urlWithoutProtocol = repoUrl.replace('https://', '')
+      repoUrl = `https://${token}@${urlWithoutProtocol}`
+    }
+
     const hasExist = existsSync(path.resolve(workdir, 'assets-git'))
     if (!hasExist) {
       logger.main.info('📥 克隆远程仓库...')
       await $({
         cwd: workdir,
         stdio: 'inherit',
-      })`git clone ${builderConfig.repo.url} assets-git`
+      })`git clone ${repoUrl} assets-git`
     } else {
       logger.main.info('🔄 拉取远程仓库更新...')
       try {
@@ -153,7 +161,7 @@ async function main() {
         await $({
           cwd: workdir,
           stdio: 'inherit',
-        })`git clone ${builderConfig.repo.url} assets-git`
+        })`git clone ${repoUrl} assets-git`
       }
     }
 

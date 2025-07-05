@@ -9,7 +9,6 @@ interface ConversionResult {
   videoUrl?: string
   error?: string
   convertedSize?: number
-  method?: 'transmux'
 }
 
 interface TransmuxOptions {
@@ -101,7 +100,6 @@ export async function transmuxMovToMp4Simple(
       success: true,
       videoUrl: convertedUrl,
       convertedSize: blob.size,
-      method: 'transmux',
     }
   } catch (error) {
     console.error('Simple transmux error:', error)
