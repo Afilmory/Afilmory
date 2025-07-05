@@ -1,5 +1,15 @@
 import type { Logger } from '../logger/index.js'
 
+// 扫描进度接口
+export interface ScanProgress {
+  currentPath: string
+  filesScanned: number
+  totalFiles?: number
+}
+
+// 进度回调类型
+export type ProgressCallback = (progress: ScanProgress) => void
+
 // 存储对象的通用接口
 export interface StorageObject {
   key: string
@@ -26,9 +36,12 @@ export interface StorageProvider {
 
   /**
    * 列出存储中的所有文件
+   * @param progressCallback 可选的进度回调函数
    * @returns 所有文件对象数组
    */
-  listAllFiles: () => Promise<StorageObject[]>
+  listAllFiles: (
+    progressCallback?: ProgressCallback,
+  ) => Promise<StorageObject[]>
 
   /**
    * 生成文件的公共访问 URL
@@ -67,4 +80,13 @@ export type GitHubConfig = {
   path?: string
   useRawUrl?: boolean
 }
-export type StorageConfig = S3Config | GitHubConfig
+
+export type LocalConfig = {
+  provider: 'local'
+  basePath: string
+  baseUrl?: string
+  excludeRegex?: string
+  maxFileLimit?: number
+}
+
+export type StorageConfig = S3Config | GitHubConfig | LocalConfig

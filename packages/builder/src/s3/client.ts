@@ -1,16 +1,15 @@
 import type { S3ClientConfig } from '@aws-sdk/client-s3'
 import { S3Client } from '@aws-sdk/client-s3'
-import { builderConfig } from '@builder'
+
+import type { S3Config } from '../storage/interfaces'
 
 // 创建 S3 客户端
-function createS3Client(): S3Client {
-  const storageConfig = builderConfig.storage
-
-  if (storageConfig.provider !== 's3') {
+export function createS3Client(config: S3Config): S3Client {
+  if (config.provider !== 's3') {
     throw new Error('Storage provider is not s3')
   }
 
-  const { accessKeyId, secretAccessKey, endpoint, region } = storageConfig
+  const { accessKeyId, secretAccessKey, endpoint, region } = config
   if (!accessKeyId || !secretAccessKey) {
     throw new Error('accessKeyId and secretAccessKey are required')
   }
@@ -30,5 +29,3 @@ function createS3Client(): S3Client {
 
   return new S3Client(s3ClientConfig)
 }
-
-export const s3Client = createS3Client()

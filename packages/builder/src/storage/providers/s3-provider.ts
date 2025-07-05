@@ -1,12 +1,17 @@
 import path from 'node:path'
 
-import type { _Object } from '@aws-sdk/client-s3'
+import type { _Object, S3Client } from '@aws-sdk/client-s3'
 import { GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 
 import { SUPPORTED_FORMATS } from '../../constants/index.js'
 import { logger } from '../../logger/index.js'
-import { s3Client } from '../../s3/client.js'
-import type { S3Config, StorageObject, StorageProvider } from '../interfaces'
+import { createS3Client } from '../../s3/client.js'
+import type {
+  ProgressCallback,
+  S3Config,
+  StorageObject,
+  StorageProvider,
+} from '../interfaces'
 
 // 将 AWS S3 对象转换为通用存储对象
 function convertS3ObjectToStorageObject(s3Object: _Object): StorageObject {
@@ -20,9 +25,11 @@ function convertS3ObjectToStorageObject(s3Object: _Object): StorageObject {
 
 export class S3StorageProvider implements StorageProvider {
   private config: S3Config
+  private s3Client: S3Client
 
   constructor(config: S3Config) {
     this.config = config
+    this.s3Client = createS3Client(config)
   }
 
   async getFile(key: string): Promise<Buffer | null> {
@@ -35,7 +42,7 @@ export class S3StorageProvider implements StorageProvider {
         Key: key,
       })
 
-      const response = await s3Client.send(command)
+      const response = await this.s3Client.send(command)
 
       if (!response.Body) {
         logger.s3.error(`S3 响应中没有 Body: ${key}`)
@@ -85,7 +92,7 @@ export class S3StorageProvider implements StorageProvider {
       MaxKeys: this.config.maxFileLimit, // 最多获取 1000 张照片
     })
 
-    const listResponse = await s3Client.send(listCommand)
+    const listResponse = await this.s3Client.send(listCommand)
     const objects = listResponse.Contents || []
     const excludeRegex = this.config.excludeRegex
       ? new RegExp(this.config.excludeRegex)
@@ -105,14 +112,16 @@ export class S3StorageProvider implements StorageProvider {
     return imageObjects
   }
 
-  async listAllFiles(): Promise<StorageObject[]> {
+  async listAllFiles(
+    _progressCallback?: ProgressCallback,
+  ): Promise<StorageObject[]> {
     const listCommand = new ListObjectsV2Command({
       Bucket: this.config.bucket,
       Prefix: this.config.prefix,
       MaxKeys: this.config.maxFileLimit,
     })
 
-    const listResponse = await s3Client.send(listCommand)
+    const listResponse = await this.s3Client.send(listCommand)
     const objects = listResponse.Contents || []
 
     return objects.map((obj) => convertS3ObjectToStorageObject(obj))
