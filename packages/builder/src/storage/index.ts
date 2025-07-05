@@ -1,5 +1,7 @@
 // 导出接口
 export type {
+  ProgressCallback,
+  ScanProgress,
   StorageConfig,
   StorageObject,
   StorageProvider,

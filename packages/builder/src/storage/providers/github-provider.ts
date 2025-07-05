@@ -4,6 +4,7 @@ import { SUPPORTED_FORMATS } from '../../constants/index.js'
 import type { Logger } from '../../logger/index.js'
 import type {
   GitHubConfig,
+  ProgressCallback,
   StorageObject,
   StorageProvider,
 } from '../interfaces.js'
@@ -155,11 +156,13 @@ export class GitHubStorageProvider implements StorageProvider {
     })
   }
 
-  async listAllFiles(): Promise<StorageObject[]> {
+  async listAllFiles(
+    progressCallback?: ProgressCallback,
+  ): Promise<StorageObject[]> {
     const files: StorageObject[] = []
     const basePath = this.githubConfig.path || ''
 
-    await this.listFilesRecursive(basePath, files)
+    await this.listFilesRecursive(basePath, files, progressCallback)
 
     return files
   }
@@ -167,6 +170,7 @@ export class GitHubStorageProvider implements StorageProvider {
   private async listFilesRecursive(
     dirPath: string,
     files: StorageObject[],
+    progressCallback?: ProgressCallback,
   ): Promise<void> {
     try {
       const url = `${this.baseApiUrl}/contents/${dirPath}?ref=${this.githubConfig.branch}`
@@ -207,7 +211,7 @@ export class GitHubStorageProvider implements StorageProvider {
           })
         } else if (item.type === 'dir') {
           // 递归处理子目录
-          await this.listFilesRecursive(item.path, files)
+          await this.listFilesRecursive(item.path, files, progressCallback)
         }
       }
     } catch (error) {

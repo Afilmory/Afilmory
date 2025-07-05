@@ -14,11 +14,42 @@ export interface LocalConfig {
   maxFileLimit?: number // 最大文件数量限制
 }
 
+export interface ScanProgress {
+  currentPath: string
+  filesScanned: number
+  totalFiles?: number
+}
+
+export type ProgressCallback = (progress: ScanProgress) => void
+
 export class LocalStorageProvider implements StorageProvider {
   private config: LocalConfig
   private basePath: string
+  private scanProgress: ScanProgress = {
+    currentPath: '',
+    filesScanned: 0,
+  }
 
   constructor(config: LocalConfig) {
+    // 参数验证
+    if (!config.basePath || config.basePath.trim() === '') {
+      throw new Error('LocalStorageProvider: basePath 不能为空')
+    }
+
+    if (config.maxFileLimit && config.maxFileLimit <= 0) {
+      throw new Error('LocalStorageProvider: maxFileLimit 必须大于 0')
+    }
+
+    if (config.excludeRegex) {
+      try {
+        new RegExp(config.excludeRegex)
+      } catch (error) {
+        throw new Error(
+          `LocalStorageProvider: excludeRegex 不是有效的正则表达式: ${error}`,
+        )
+      }
+    }
+
     this.config = config
 
     // 处理相对路径和绝对路径
@@ -64,7 +95,10 @@ export class LocalStorageProvider implements StorageProvider {
 
       return buffer
     } catch (error) {
-      logger?.error(`读取文件失败：${key}`, error)
+      const errorType = error instanceof Error ? error.name : 'UnknownError'
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      logger?.error(`[${errorType}] 读取文件失败：${key} - ${errorMessage}`)
       return null
     }
   }
@@ -79,13 +113,27 @@ export class LocalStorageProvider implements StorageProvider {
     })
   }
 
-  async listAllFiles(): Promise<StorageObject[]> {
+  async listAllFiles(
+    progressCallback?: ProgressCallback,
+  ): Promise<StorageObject[]> {
     const files: StorageObject[] = []
     const excludeRegex = this.config.excludeRegex
       ? new RegExp(this.config.excludeRegex)
       : null
 
-    await this.scanDirectory(this.basePath, '', files, excludeRegex)
+    // 重置进度
+    this.scanProgress = {
+      currentPath: '',
+      filesScanned: 0,
+    }
+
+    await this.scanDirectory(
+      this.basePath,
+      '',
+      files,
+      excludeRegex,
+      progressCallback,
+    )
 
     // 应用文件数量限制
     if (this.config.maxFileLimit && files.length > this.config.maxFileLimit) {
@@ -103,8 +151,13 @@ export class LocalStorageProvider implements StorageProvider {
     relativePath: string,
     files: StorageObject[],
     excludeRegex?: RegExp | null,
+    progressCallback?: ProgressCallback,
   ): Promise<void> {
     try {
+      // 更新进度
+      this.scanProgress.currentPath = relativePath || '/'
+      progressCallback?.(this.scanProgress)
+
       const entries = await fs.readdir(dirPath, { withFileTypes: true })
 
       for (const entry of entries) {
@@ -125,6 +178,7 @@ export class LocalStorageProvider implements StorageProvider {
             relativeFilePath,
             files,
             excludeRegex,
+            progressCallback,
           )
         } else if (entry.isFile()) {
           try {
@@ -134,15 +188,33 @@ export class LocalStorageProvider implements StorageProvider {
               key: relativeFilePath,
               size: stats.size,
               lastModified: stats.mtime,
-              etag: `${stats.mtime.getTime()}-${stats.size}`, // 使用修改时间和大小作为 etag
+              etag: this.generateETag(stats),
             })
+
+            // 更新已扫描文件数
+            this.scanProgress.filesScanned++
+            if (this.scanProgress.filesScanned % 100 === 0) {
+              // 每 100 个文件报告一次进度
+              progressCallback?.(this.scanProgress)
+            }
           } catch (error) {
-            logger.main.warn(`获取文件信息失败：${relativeFilePath}`, error)
+            const errorType =
+              error instanceof Error ? error.name : 'UnknownError'
+            const errorMessage =
+              error instanceof Error ? error.message : String(error)
+            logger.main.warn(
+              `[${errorType}] 获取文件信息失败：${relativeFilePath} - ${errorMessage}`,
+            )
           }
         }
       }
     } catch (error) {
-      logger.main.error(`扫描目录失败：${dirPath}`, error)
+      const errorType = error instanceof Error ? error.name : 'UnknownError'
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      logger.main.error(
+        `[${errorType}] 扫描目录失败：${dirPath} - ${errorMessage}`,
+      )
     }
   }
 
@@ -190,6 +262,13 @@ export class LocalStorageProvider implements StorageProvider {
   }
 
   /**
+   * 生成文件的 ETag
+   */
+  private generateETag(stats: fs.Stats): string {
+    return `${stats.mtime.getTime()}-${stats.size}`
+  }
+
+  /**
    * 获取本地存储的基础路径
    */
   getBasePath(): string {
@@ -216,7 +295,12 @@ export class LocalStorageProvider implements StorageProvider {
       await fs.mkdir(this.basePath, { recursive: true })
       logger.main.info(`创建本地存储目录：${this.basePath}`)
     } catch (error) {
-      logger.main.error(`创建本地存储目录失败：${this.basePath}`, error)
+      const errorType = error instanceof Error ? error.name : 'UnknownError'
+      const errorMessage =
+        error instanceof Error ? error.message : String(error)
+      logger.main.error(
+        `[${errorType}] 创建本地存储目录失败：${this.basePath} - ${errorMessage}`,
+      )
       throw error
     }
   }

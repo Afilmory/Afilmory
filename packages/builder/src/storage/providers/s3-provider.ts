@@ -6,7 +6,12 @@ import { GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { SUPPORTED_FORMATS } from '../../constants/index.js'
 import { logger } from '../../logger/index.js'
 import { createS3Client } from '../../s3/client.js'
-import type { S3Config, StorageObject, StorageProvider } from '../interfaces'
+import type {
+  ProgressCallback,
+  S3Config,
+  StorageObject,
+  StorageProvider,
+} from '../interfaces'
 
 // 将 AWS S3 对象转换为通用存储对象
 function convertS3ObjectToStorageObject(s3Object: _Object): StorageObject {
@@ -107,7 +112,9 @@ export class S3StorageProvider implements StorageProvider {
     return imageObjects
   }
 
-  async listAllFiles(): Promise<StorageObject[]> {
+  async listAllFiles(
+    _progressCallback?: ProgressCallback,
+  ): Promise<StorageObject[]> {
     const listCommand = new ListObjectsV2Command({
       Bucket: this.config.bucket,
       Prefix: this.config.prefix,
